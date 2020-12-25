@@ -1,0 +1,107 @@
+#!/bin/rc
+rfork en
+
+exercises=()
+session=()
+reps=()
+sets=()
+wdir=$home/lib/fitness
+today=`{date | awk '{print $3 tolower($2) $6}'}
+
+. <{<$wdir/exercises awk '/^[^	]/ {print "exercises=($exercises ''"$0"'')"}'}
+
+fn isnumber{
+	! ~ `{echo $1 | awk '/^[0-9]+$/'} ''
+}
+
+fn printexers{
+	for(i in `{seq 1 $#exercises})
+		echo $i':'	$exercises($i)
+}
+
+fn printsession{
+	showreps=$1
+	showsets=$2
+	for(i in `{seq 1 $#session}){
+		echo -n $i':'	$exercises($session($i))
+		if(~ $showreps 1 && ! ~ $#reps 0){
+			echo -n ' '[$reps($i)^x
+			if(~ $showsets 1 && ! ~ $#sets 0)
+				echo -n $sets($i)
+			echo -n ]
+		}
+		echo
+	}
+}
+
+fn plansession{
+	session=()
+	e=()
+	while(! ~ $e w){
+		echo program your workout session (a to add all, w to begin):
+		printexers | mc
+		e=`{read}
+		if(isnumber $e && test $e -ge 1 && test $e -le $#exercises)
+			session=($session $e)
+		if not if(~ $e a){
+			session=`{seq 1 $#exercises}
+			e=w
+		}
+	}
+
+	printsession | mc
+	echo -n is this all right?' '
+	ready=`{read}
+
+	if(~ $ready y)
+		setupreps
+	if not
+		plansession
+}
+
+fn setupreps{
+	reps=()
+	for(i in `{seq 1 $#session}){
+		r=()
+		while(! isnumber $r){
+			echo -n how many reps for $exercises($session($i))?' '
+			r=`{read}
+		}
+		reps=($reps $r)
+	}
+
+	printsession 1 | mc
+	echo -n is this all right?' '
+	ready=`{read}
+
+	if(~ $ready y)
+		start
+	if not
+		setupreps
+}
+
+fn mkreport{
+	echo '#'exercise,reps,sets >$wdir/$today
+	for(i in `{seq 1 $#session})
+		echo $exercises($session($i))^,^$reps($i)^,^$sets($i) >>$wdir/$today
+}
+
+fn start{
+	# initialize the set array
+	for(i in `{seq 1 $#session})
+		sets=($sets 0)
+
+	while(! ~ $e q){
+		printsession 1 1 | mc
+		e=`{read}
+		if(isnumber $e && test $e -ge 1 && test $e -le $#session){
+			lo=`{echo $e-1 | bc}
+			hi=`{echo $e+1 | bc}
+			sets=($sets(1-$lo) `{echo $sets($e)+1 | bc} $sets($hi-))
+		}
+	}
+
+	mkreport
+}
+
+plansession
