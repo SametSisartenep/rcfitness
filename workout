@@ -7,6 +7,7 @@ reps=()
 sets=()
 wdir=$home/lib/fitness
 today=`{date | awk '{print $3 tolower($2) $6}'}
+t0=`{date | awk '{split($4, hms, /:/); print hms[1]":"hms[2]}'}
 
 . <{<$wdir/exercises awk '/^[^	]/ {print "exercises=($exercises ''"$0"'')"}'}
 
@@ -81,10 +82,12 @@ fn setupreps{
 }
 
 fn mkreport{
+	t1=`{date | awk '{split($4, hms, /:/); print hms[1]":"hms[2]}'}
 	echo '#'exercise,reps,sets >$wdir/$today
 	for(i in `{seq 1 $#session})
 		if(! ~ $sets($i) 0)
 			echo $exercises($session($i))^,^$reps($i)^,^$sets($i) >>$wdir/$today
+	echo '#' session ran from $t0 to $t1 >>$wdir/$today
 }
 
 fn start{
