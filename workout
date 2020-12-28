@@ -83,7 +83,8 @@ fn setupreps{
 fn mkreport{
 	echo '#'exercise,reps,sets >$wdir/$today
 	for(i in `{seq 1 $#session})
-		echo $exercises($session($i))^,^$reps($i)^,^$sets($i) >>$wdir/$today
+		if(! ~ $sets($i) 0)
+			echo $exercises($session($i))^,^$reps($i)^,^$sets($i) >>$wdir/$today
 }
 
 fn start{
