@@ -1,3 +1,32 @@
-# 66 + 6.23*lbs + 12.7*inch + 6.8*years
-66 + 6.23*176.36 + 12.7*68.89 - 6.8*23
-1883.2258
+#!/bin/rc
+#
+# BMR following the Mifflin-St. Jeor equation
+# 	P(kcal/day) = 10*weight(kg) + 6.25*height(cm) - (5*age(yr)) + s
+# where s is +5 for men and -161 for women
+#
+s=5
+w=()
+h=()
+a=()
+flagfmt='w'
+args='weight height age'
+
+fn usage {
+	aux/usage
+	exit usage
+}
+
+if(! ifs=() eval `{aux/getflags $*} || ~ $#* 0)
+	usage
+
+w=$1
+h=$2
+a=$3
+
+if(~ $flagw 1)
+	s=-161
+
+bc <<EOF
+scale=4
+10*$w + 6.25*$h - (5*$a) + $s
+EOF
