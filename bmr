@@ -16,7 +16,7 @@ fn usage {
 	exit usage
 }
 
-if(! ifs=() eval `{aux/getflags $*} || ~ $#* 0)
+if(! ifs=() eval `{aux/getflags $*} || ! ~ $#* 3)
 	usage
 
 w=$1
