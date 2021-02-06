@@ -1,0 +1,20 @@
+#!/bin/rc
+rfork ne
+today=`{date -i | awk -F'-' '{print $2"/"$3}'}
+w=()
+flagfmt=''
+args='weight'
+
+fn usage {
+	aux/usage
+	exit usage
+}
+
+if(! ifs=() eval `{aux/getflags $*} || ! ~ $#* 1)
+	usage
+
+w=$1
+
+cat <<EOF >>weight
+$today	$w
+EOF

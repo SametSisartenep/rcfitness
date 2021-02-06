@@ -4,6 +4,7 @@
 # 	P(kcal/day) = 10*weight(kg) + 6.25*height(cm) - 5*age(yr) + s
 # where s is +5 for men and -161 for women
 #
+rfork ne
 s=5
 w=()
 h=()
