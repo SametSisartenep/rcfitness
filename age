@@ -1,0 +1,8 @@
+#!/bin/rc
+rfork ne
+bday=862048830 # % date -j -f "%b %d %Y" "Apr 26 1997" +%s
+today=`{date -n}
+
+bc <<EOF
+($today - $bday)/(3600*24*365)
+EOF

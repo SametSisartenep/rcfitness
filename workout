@@ -15,6 +15,10 @@ fn isnumber{
 	! ~ `{echo $1 | awk '/^[0-9]+$/'} ''
 }
 
+fn sanitize{
+	echo $1 | sed 's/[ 	]#.*//g'
+}
+
 fn printexers{
 	for(i in `{seq 1 $#exercises})
 		echo $i':'	$exercises($i)
@@ -67,6 +71,7 @@ fn setupreps{
 		while(! isnumber $r){
 			echo -n how many reps for $exercises($session($i))?' '
 			r=`{read}
+			r=`{sanitize $r}
 		}
 		reps=($reps $r)
 	}

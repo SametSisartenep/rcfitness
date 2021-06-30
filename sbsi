@@ -1,0 +1,33 @@
+#!/bin/rc
+#
+# Surface-based Body Shape Index (SBSI)
+#		H(cm)^7/4 * WC(cm)^5/6
+#	SBSI = ------------------------
+#		      BSA(m²) * VTC(cm)
+# where WC is waist circumference and VTC is the vertical trunk one.
+#
+rfork ne
+vtc=()
+wc=()
+w=()
+h=()
+flagfmt=''
+args='vtc wc weight height'
+
+fn usage {
+	aux/usage
+	exit usage
+}
+
+if(! ifs=() eval `{aux/getflags $*} || ! ~ $#* 4)
+	usage
+
+vtc=$1
+wc=$2
+w=$3
+h=$4
+bsa=`{bsa $w $h}
+
+hoc <<EOF
+($h ^ (7/4) * $wc ^ (5/6))/($bsa * $vtc)
+EOF

@@ -1,0 +1,2 @@
+#!/bin/rc
+<exercises grep -v '^	' | awk '{print NR"	"$0}'

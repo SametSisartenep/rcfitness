@@ -1,0 +1,25 @@
+#!/bin/rc
+#
+# Body Surface Area (BSA) following the Lipscombe equation
+#	BSA(m²) = 0.00878108 * W(kg)^0.434972 * H(cm)^0.67844
+#
+rfork ne
+w=()
+h=()
+flagfmt=''
+args='weight height'
+
+fn usage {
+	aux/usage
+	exit usage
+}
+
+if(! ifs=() eval `{aux/getflags $*} || ! ~ $#* 2)
+	usage
+
+w=$1
+h=$2
+
+hoc <<EOF
+0.00878108 * $w ^ 0.434972 * $h ^ 0.67844
+EOF
