@@ -46,6 +46,7 @@ fn plansession{
 		echo program your workout session (a to add all, w to begin):
 		printexers | mc
 		e=`{read}
+		e=`{sanitize $e}
 		if(isnumber $e && test $e -ge 1 && test $e -le $#exercises)
 			session=($session $e)
 		if not if(~ $e a){
@@ -103,6 +104,7 @@ fn start{
 	while(! ~ $e q){
 		printsession 1 1 | mc
 		e=`{read}
+		e=`{sanitize $e}
 		if(isnumber $e && test $e -ge 1 && test $e -le $#session){
 			lo=`{echo $e-1 | bc}
 			hi=`{echo $e+1 | bc}
