@@ -18,10 +18,9 @@ Computes the BMR using the Mifflin-St. Jeor equation.
 
 ## default session file
 
-The `default.session` file shows a repetitions-per-exercise table,
-matching the order in the `exercises` file, ready to be selected and
-sent to a [rio(1)](http:/man.9front.org/1/rio) window right after
-starting a `workout`.
+The `calisthenics.week` file shows a selection of exercises and a
+repetitions-per-exercise table, matching the order in the `exercises`
+file.  It's used to automatically set up a routine, like `{cat calisthenics.week; cat} | workout`.
 
 ## about weights
 
