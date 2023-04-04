@@ -2,6 +2,12 @@
 
 Rc tools for fitness tracking
 
+## default session file
+
+The `calisthenics.week` file shows a selection of exercises and a
+repetitions-per-exercise table, matching the order in the `exercises`
+file.  It's used to automatically set up a routine, like `{cat calisthenics.week; cat} | workout`.
+
 ## basal metabolic rate (BMR)
 
 Computes the BMR using the Mifflin-St. Jeor equation.
@@ -15,12 +21,6 @@ Computes the BMR using the Mifflin-St. Jeor equation.
 
 	# today the scale marks 80kg (careful with obsessing over this)
 	% weighin 80
-
-## default session file
-
-The `calisthenics.week` file shows a selection of exercises and a
-repetitions-per-exercise table, matching the order in the `exercises`
-file.  It's used to automatically set up a routine, like `{cat calisthenics.week; cat} | workout`.
 
 ## about weights
 
