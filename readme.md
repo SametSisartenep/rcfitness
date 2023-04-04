@@ -2,11 +2,24 @@
 
 Rc tools for fitness tracking
 
-## default session file
+## default session files
 
-The `calisthenics.week` file shows a selection of exercises and a
-repetitions-per-exercise table, matching the order in the `exercises`
-file.  It's used to automatically set up a routine, like `{cat calisthenics.week; cat} | workout`.
+The `(calisthenics skills weights)^.week` files show a selection of exercises and a
+repetitions-per-exercise table, matching the index in the `exercises`
+file.  It's used to automatically set up a routine, like `cat calisthenics.week /fd/0 | workout`.
+
+### calisthenics session
+
+Focused on strength and hypertrophy using bodyweight exercises.
+
+### skills session
+
+Specific progressions to build up to the front lever and planche
+movements.
+
+### weights session
+
+Mostly hypertrophy training and conditioning using weighted exercises.
 
 ## basal metabolic rate (BMR)
 
