@@ -1,0 +1,15 @@
+#!/bin/rc
+rfork en
+wdir=$home/lib/fitness
+years=(2020 2021 2022)
+months=(jan feb mar apr may jun jul aug sep oct nov dec)
+
+mkdir -p $wdir/archive
+
+for(y in $years)
+	for(m in $months)
+		if(! ~ `{ls *$m$y >[2]/dev/null | wc -l} 0){
+			tar cvzf $m$y.tgz *$m$y
+			mv $m$y.tgz $wdir/archive/
+			rm *$m$y
+		}
