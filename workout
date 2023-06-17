@@ -102,7 +102,11 @@ fn start{
 		sets=($sets 0)
 
 	while(! ~ $e q){
-		printsession 1 1 | mc
+		if(~ $e t)
+			echo session began at $t0
+		if not
+			printsession 1 1 | mc
+		echo -n '> '
 		e=`{read}
 		e=`{sanitize $e}
 		if(isnumber $e && test $e -ge 1 && test $e -le $#session){
