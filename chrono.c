@@ -134,15 +134,15 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 		segs[TV].pts[i] = Pt(segs[TV].poly[i].x*scale, segs[TV].poly[i].y*scale);
 		segs[TH].pts[i] = Pt(segs[TH].poly[i].x*scale, segs[TH].poly[i].y*scale);
 	}
-	segs[TH].pts[segs[TH].npts-1] = segs[TH].pts[0];
-	segs[TV].pts[segs[TV].npts-1] = segs[TV].pts[0];
+	segs[TH].pts[i] = segs[TH].pts[0];
+	segs[TV].pts[i] = segs[TV].pts[0];
 
 	/* normalize TD */
 	for(i = 0; i < segs[TD].npts-1; i++){
 		segs[TD].poly[i] = divpt2(segs[TD].poly[i], maxlen);
 		segs[TD].pts[i] = Pt(segs[TD].poly[i].x*scale, segs[TD].poly[i].y*scale);
 	}
-	segs[TD].pts[segs[TD].npts-1] = segs[TD].pts[0];
+	segs[TD].pts[i] = segs[TD].pts[0];
 
 	/* paint case */
 	bbox = rectaddpt(bbox, addpt(dst->r.min, dp));
@@ -157,9 +157,11 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 			segpt[j] = addpt(segs[loc[i].segtype].pts[j], loc[i].p);
 			segpt[j] = addpt(segpt[j], bbox.min);
 		}
-		segpt[segs[loc[i].segtype].npts-1] = segpt[0];
+		segpt[j] = segpt[0];
 
 		fillpoly(dst, segpt, segs[loc[i].segtype].npts, 0, fg, ZP);
+		if(scale > 16)
+			poly(dst, segpt, segs[loc[i].segtype].npts, 0, 0, 0, display->black, ZP);
 	}
 
 	return Pt(bbox.max.x + 1, bbox.min.y);
@@ -248,7 +250,7 @@ stopwatch_draw(Stopwatch *self, Image *dst, Point dp, double scale)
 	int i;
 
 	for(i = 0; i < nelem(self->hms); i++){
-		if(i > 0 && i < 3)
+		if(i > 0)
 			dp.x += scale/3;
 		dp = string7(dst, dp, self->hms[i], scale, d7fg, d7bg);
 	}
@@ -379,7 +381,6 @@ threadmain(int argc, char *argv[])
 {
 	Rune r;
 
-	GEOMfmtinstall();
 	ARGBEGIN{
 	default: usage();
 	}ARGEND;
