@@ -18,8 +18,8 @@ enum {
 typedef struct Stopwatch Stopwatch;
 struct Stopwatch
 {
-	uvlong elapsed;		/* in ms */
-	char hms[3][6+1];	/* HH MM SS.sss */
+	uvlong elapsed;			/* in ms */
+	char hms[2+1+2+1+2+1+3+1];	/* HH:MM:SS.sss */
 	int state;
 
 	void (*start)(Stopwatch*);
@@ -32,7 +32,7 @@ struct Stopwatch
 Rectangle UR = {0,0,1,1};
 char deffont[] = "/lib/font/bit/lucida/unicode.32.font";
 Image *d7bg, *d7fg;
-int d7scale = 60;
+int d7scale = 52;
 
 Image *screenb;
 Keyboardctl *kc;
@@ -56,7 +56,7 @@ eallocimage(Display *d, Rectangle r, ulong chan, int repl, ulong col)
 /*
  * 7-segment display interface
  *
- * 	   A
+ * 	   A      ´´ I/J
  * 	   ----
  * 	  |    | B
  * 	F | G  |
@@ -66,16 +66,16 @@ eallocimage(Display *d, Rectangle r, ulong chan, int repl, ulong col)
  * 	   ----   [] H
  * 	   D
  *
- * bits: 7 6 5 4 3 2 1 0
- * func: H G F E D C B A
+ * bits: 10 9 8 7 6 5 4 3 2 1 0
+ * func:  K J I H G F E D C B A
  */
 static Point
-d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
+d7(Image *dst, Point dp, ushort bits, int scale, Image *fg, Image *bg)
 {
-	enum { TV, TH, TD, NSEGS };
+	enum { TV, TH, TD, TDD, TT, TDT, NSEGS };
 	struct {
-		Point2 poly[6];
-		Point pts[6+1];
+		Point2 poly[8];
+		Point pts[8+1];
 		int npts;
 	} segs[NSEGS] = {	/* segment parameters */
 	 [TV]	{ .poly = {
@@ -93,25 +93,50 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 			{ 2, 2, 1 },
 			{ 0, 2, 1 },
 		}, .npts = 4+1 },
+	 [TDD]	{ .poly = {
+			{ 0, 0, 1 },
+			{ 2, 0, 1 },
+			{ 2, 2, 1 },
+			{ 0, 2, 1 },
+			{ 0, 6, 1 },
+			{ 2, 6, 1 },
+			{ 2, 8, 1 },
+			{ 0, 8, 1 },
+		}, .npts = 8+1 },
+	 [TT]	{ .poly = {
+			{ 0, 0, 1 },
+			{ 1, 0, 1 },
+			{ 0, 2, 1 },
+		}, .npts = 3+1 },
+	 [TDT]	{ .poly = {
+			{ 0, 0, 1 },
+			{ 0, 2, 1 },
+			{ 1, 0, 1 },
+			{ 1, 2, 1 },
+			{ 2, 0, 1 },
+		}, .npts = 5+1 },
 	};
 	struct {
 		Point p;
 		int segtype;
-	} loc[8] = {		/* segment locations (layout) */
-		{  2,  3, TH },	/* A */
-		{  9,  2, TV },	/* B */
-		{  9, 10, TV },	/* C */
-		{  2, 19, TH },	/* D */
-		{  1, 10, TV },	/* E */
-		{  1,  2, TV },	/* F */
-		{  2, 11, TH },	/* G */
-		{ 12, 17, TD },	/* H (dot) */
+	} loc[] = {		/* segment locations (layout) */
+		{  2,  3, TH },		/* A */
+		{  9,  2, TV },		/* B */
+		{  9, 10, TV },		/* C */
+		{  2, 19, TH },		/* D */
+		{  1, 10, TV },		/* E */
+		{  1,  2, TV },		/* F */
+		{  2, 11, TH },		/* G */
+		{ 12, 17, TD },		/* H (dot) */
+		{ 12,  0, TT },		/* I (tick) */
+		{ 12,  0, TDT },	/* J (double tick) */
+		{  5,  5, TDD },	/* K (double dot) */
 	};
 	Rectangle bbox = {
 		{ 0, 0 },
 		{ 14, 20 },
 	};
-	Point segpt[7];
+	Point segpt[8+1];
 	double maxlen;
 	int i, j;
 
@@ -137,12 +162,14 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 	segs[TH].pts[i] = segs[TH].pts[0];
 	segs[TV].pts[i] = segs[TV].pts[0];
 
-	/* normalize TD */
-	for(i = 0; i < segs[TD].npts-1; i++){
-		segs[TD].poly[i] = divpt2(segs[TD].poly[i], maxlen);
-		segs[TD].pts[i] = Pt(segs[TD].poly[i].x*scale, segs[TD].poly[i].y*scale);
+	/* normalize remaining segments */
+	for(i = TH+1; i < nelem(segs); i++){
+		for(j = 0; j < segs[i].npts-1; j++){
+			segs[i].poly[j] = divpt2(segs[i].poly[j], maxlen);
+			segs[i].pts[j] = Pt(segs[i].poly[j].x*scale, segs[i].poly[j].y*scale);
+		}
+		segs[i].pts[j] = segs[i].pts[0];
 	}
-	segs[TD].pts[i] = segs[TD].pts[0];
 
 	/* paint case */
 	bbox = rectaddpt(bbox, addpt(dst->r.min, dp));
@@ -172,7 +199,7 @@ string7(Image *dst, Point dp, char *s, int scale, Image *fg, Image *bg)
 {
 	static struct {
 		char c;
-		uchar bits;
+		ushort bits;
 	} dmap[] = {
 		'0', 0x3F,
 		'1', 0x06,
@@ -184,8 +211,9 @@ string7(Image *dst, Point dp, char *s, int scale, Image *fg, Image *bg)
 		'7', 0x07,
 		'8', 0x7F,
 		'9', 0x6F,
+		':', 0x400,
 	};
-	uchar bits;
+	ushort bits;
 	int i;
 
 	if(s == nil)
@@ -197,6 +225,10 @@ string7(Image *dst, Point dp, char *s, int scale, Image *fg, Image *bg)
 				bits = dmap[i].bits;
 				if(s[1] == '.')
 					bits |= 0x80;
+				else if(s[1] == '\'')
+					bits |= 0x100;
+				else if(s[1] == '"')
+					bits |= 0x200;
 				dp = d7(dst, dp, bits, scale, fg, bg);
 				break;
 			}
@@ -229,7 +261,8 @@ stopwatch_pause(Stopwatch *self)
 static void
 stopwatch_update(Stopwatch *self, uvlong dt)
 {
-	int HMS[4], i;
+	int HMS[4];
+	char *p, *e;
 	double t;
 
 	self->elapsed += dt;
@@ -239,21 +272,18 @@ stopwatch_update(Stopwatch *self, uvlong dt)
 	t *= 60;		HMS[2] = t;	t -= HMS[2];
 	t *= 1000;		HMS[3] = t;
 
-	for(i = 0; i < nelem(HMS)-2; i++)
-		snprint(self->hms[i], sizeof self->hms[i], "%02d", HMS[i]);
-	snprint(self->hms[i], sizeof self->hms[i], "%02d.%03d", HMS[i], HMS[i+1]);
+	p = self->hms;
+	e = p + sizeof(self->hms);
+
+	if(HMS[0] > 0)
+		p = seprint(p, e, "%02d:", HMS[0]);
+	seprint(p, e, "%02d'%02d\"%03d", HMS[1], HMS[2], HMS[3]);
 }
 
 static void
 stopwatch_draw(Stopwatch *self, Image *dst, Point dp, double scale)
 {
-	int i;
-
-	for(i = 0; i < nelem(self->hms); i++){
-		if(i > 0)
-			dp.x += scale/3;
-		dp = string7(dst, dp, self->hms[i], scale, d7fg, d7bg);
-	}
+	string7(dst, dp, self->hms, scale, d7fg, d7bg);
 }
 
 void
