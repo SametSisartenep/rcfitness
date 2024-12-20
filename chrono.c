@@ -19,7 +19,7 @@ typedef struct Stopwatch Stopwatch;
 struct Stopwatch
 {
 	uvlong elapsed;		/* in ms */
-	char hms[3][6+1];	/* HH MM SS.ss */
+	char hms[3][6+1];	/* HH MM SS.sss */
 	int state;
 
 	void (*start)(Stopwatch*);
@@ -79,37 +79,37 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 		int npts;
 	} segs[NSEGS] = {	/* segment parameters */
 	 [TV]	{ .poly = {
-			{ 1,   0, 1 },
-			{ 1.5, 1, 1 },
-			{ 1.5, 5, 1 },
-			{ 1,   6, 1 },
-			{ 0.5, 5, 1 },
-			{ 0.5, 1, 1 },
+			{ 1, 0, 1 },
+			{ 2, 1, 1 },
+			{ 2, 7, 1 },
+			{ 1, 8, 1 },
+			{ 0, 7, 1 },
+			{ 0, 1, 1 },
 		}, .npts = 6+1 },
 	 [TH]	{ .npts = 6+1 },
 	 [TD]	{ .poly = {
 			{ 0, 0, 1 },
-			{ 1, 0, 1 },
-			{ 1, 1, 1 },
-			{ 0, 1, 1 },
+			{ 2, 0, 1 },
+			{ 2, 2, 1 },
+			{ 0, 2, 1 },
 		}, .npts = 4+1 },
 	};
 	struct {
 		Point p;
 		int segtype;
 	} loc[8] = {		/* segment locations (layout) */
-		{ 1,  2, TH },	/* A */
-		{ 6,  1, TV },	/* B */
-		{ 6,  7, TV },	/* C */
-		{ 1, 14, TH },	/* D */
-		{ 0,  7, TV },	/* E */
-		{ 0,  1, TV },	/* F */
-		{ 1,  8, TH },	/* G */
-		{ 8, 13, TD },	/* H (dot) */
+		{  2,  3, TH },	/* A */
+		{  9,  2, TV },	/* B */
+		{  9, 10, TV },	/* C */
+		{  2, 19, TH },	/* D */
+		{  1, 10, TV },	/* E */
+		{  1,  2, TV },	/* F */
+		{  2, 11, TH },	/* G */
+		{ 12, 17, TD },	/* H (dot) */
 	};
 	Rectangle bbox = {
 		{ 0, 0 },
-		{ 9, 14 },
+		{ 14, 20 },
 	};
 	Point segpt[7];
 	double maxlen;
@@ -161,7 +161,7 @@ d7(Image *dst, Point dp, uchar bits, int scale, Image *fg, Image *bg)
 
 		fillpoly(dst, segpt, segs[loc[i].segtype].npts, 0, fg, ZP);
 		if(scale > 16)
-			poly(dst, segpt, segs[loc[i].segtype].npts, 0, 0, 0, display->black, ZP);
+			poly(dst, segpt, segs[loc[i].segtype].npts, 0, 0, 0, bg, ZP);
 	}
 
 	return Pt(bbox.max.x + 1, bbox.min.y);
@@ -321,7 +321,7 @@ initscreenb(void)
 void
 redraw(void)
 {
-	draw(screenb, screenb->r, display->black, nil, ZP);
+	draw(screenb, screenb->r, d7bg, nil, ZP);
 	chrono->draw(chrono, screenb, Pt(10, 10), d7scale);
 	draw(screen, screen->r, screenb, nil, ZP);
 	flushimage(display, 1);
@@ -392,8 +392,10 @@ threadmain(int argc, char *argv[])
 	if((kc = initkeyboard(nil)) == nil)
 		sysfatal("initkeyboard: %r");
 
-	d7bg = eallocimage(display, UR, XRGB32, 1, 0x333333FF);
-	d7fg = eallocimage(display, UR, XRGB32, 1, DRed);
+//	d7bg = eallocimage(display, UR, XRGB32, 1, 0x333333FF);
+//	d7fg = eallocimage(display, UR, XRGB32, 1, DRed);
+	d7bg = eallocimage(display, UR, XRGB32, 1, 0xA7AD9FFF);
+	d7fg = eallocimage(display, UR, XRGB32, 1, DBlack);
 
 	initscreenb();
 	drawc = chancreate(sizeof(void*), 1);
