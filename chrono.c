@@ -21,6 +21,8 @@ struct Stopwatch
 	uvlong elapsed;			/* in ms */
 	char hms[2+1+2+1+2+1+3+1];	/* HH:MM:SS.sss */
 	int state;
+	Channel *startc;
+	Channel *stopc;
 
 	void (*start)(Stopwatch*);
 	void (*stop)(Stopwatch*);
@@ -141,8 +143,9 @@ d7(Image *dst, Point dp, ushort bits, int scale, Image *fg, Image *bg)
 	int i, j;
 
 	maxlen = 0;
-	for(i = 0; i < segs[TV].npts-1; i++)
-		maxlen = max(maxlen, vec2len(segs[TV].poly[i]));
+	for(j = 0; j < nelem(segs); j++)
+		for(i = 0; i < segs[j].npts-1; i++)
+			maxlen = max(maxlen, vec2len(segs[j].poly[i]));
 
 	bbox.max.x = (double)bbox.max.x/maxlen * scale;
 	bbox.max.y = (double)bbox.max.y/maxlen * scale;
@@ -242,11 +245,13 @@ stopwatch_start(Stopwatch *self)
 		self->elapsed = 0;
 
 	self->state = Run;
+	send(self->startc, nil);
 }
 
 static void
 stopwatch_stop(Stopwatch *self)
 {
+	send(self->stopc, nil);
 	if(self->state == Run)
 		self->state = Stop;
 }
@@ -254,6 +259,7 @@ stopwatch_stop(Stopwatch *self)
 static void
 stopwatch_pause(Stopwatch *self)
 {
+	send(self->stopc, nil);
 	if(self->state == Run)
 		self->state = Pause;
 }
@@ -297,18 +303,35 @@ timer(void *arg)
 
 	s = arg;
 	t0 = nanosec();
-	for(;;){
-		t1 = nanosec();
-		dt = (t1 - t0)/1000000ULL;
 
-		if(s->state == Run){
+	enum { START, STOP, TICK };
+	Alt a[] = {
+	 [START]	{s->startc, nil, CHANRCV},
+	 [STOP]		{s->stopc, nil, CHANRCV},
+	 [TICK]		{nil, nil, CHANEND}
+	};
+	for(;;)
+		switch(alt(a)){
+		case START:
+			t0 = nanosec();
+			a[nelem(a)-1].op = CHANNOBLK;
+			break;
+		case STOP:
+			a[nelem(a)-1].op = CHANEND;
+			continue;
+		case TICK:
+			t1 = nanosec();
+			dt = (t1 - t0)/1000000ULL;
+	
 			s->update(s, dt);
 			nbsend(drawc, nil);
+	
+			t0 = t1;
+			sleep(HZ2MS(13));
+			break;
+		default:
+			sysfatal("chronometer broke. get a new one");
 		}
-
-		t0 = t1;
-		sleep(HZ2MS(13));
-	}
 }
 
 Stopwatch *
@@ -321,6 +344,8 @@ mkstopwatch(void)
 		sysfatal("malloc: %r");
 
 	memset(s, 0, sizeof *s);
+	s->startc = chancreate(sizeof(void*), 0);
+	s->stopc = chancreate(sizeof(void*), 0);
 	s->start = stopwatch_start;
 	s->stop = stopwatch_stop;
 	s->pause = stopwatch_pause;
@@ -336,6 +361,8 @@ mkstopwatch(void)
 void
 rmstopwatch(Stopwatch *s)
 {
+	chanfree(s->startc);
+	chanfree(s->stopc);
 	free(s);
 }
 
