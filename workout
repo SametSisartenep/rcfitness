@@ -109,10 +109,20 @@ fn start{
 		echo -n '> '
 		e=`{read}
 		e=`{sanitize $e}
+		hasminus=0
+		if(~ $e -*){
+			hasminus=1
+			e=`{echo $e | sed 's/^\-//'}
+		}
 		if(isnumber $e && test $e -ge 1 && test $e -le $#session){
 			lo=`{echo $e-1 | bc}
 			hi=`{echo $e+1 | bc}
-			sets=($sets(1-$lo) `{echo $sets($e)+1 | bc} $sets($hi-))
+			if(~ $hasminus 1){
+				if(test $sets($e) -gt 0)
+					sets=($sets(1-$lo) `{echo $sets($e)-1 | bc} $sets($hi-))
+			}
+			if not
+				sets=($sets(1-$lo) `{echo $sets($e)+1 | bc} $sets($hi-))
 		}
 	}
 
